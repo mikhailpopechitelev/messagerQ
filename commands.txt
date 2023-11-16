@@ -1,0 +1,6 @@
+python -m venv venv - создание виратульного окружения с названием venv 
+.\venv\Scripts\activate - переход в виратульное окружение в windos 
+deactivate - отключение вируального окружения
+pip install django - скачивание библиотеки gjango 
+django-admin startproject messagerQ - базовое создание проекта 
+python manage.py runserver - первичный запуск тестового сервера по дефолту http://127.0.0.1:8000/
