@@ -4,3 +4,13 @@ deactivate - отключение вируального окружения
 pip install django - скачивание библиотеки gjango 
 django-admin startproject messagerQ - базовое создание проекта 
 python manage.py runserver - первичный запуск тестового сервера по дефолту http://127.0.0.1:8000/
+python manage.py startapp chats - cоздание первого приложения месседжера
+pg_ctl status -D "C:\Program Files\PostgreSQL\15\data" - проверка запущен ли уже сервер 
+pg_isready -h localhost -p 5432 - проверка запущен ли уже сервер на localhost
+pg_ctl start -D "C:\Program Files\PostgreSQL\15\data" запуск сервера на PostgreSQL
+psql -h localhost -U postgres -d postgres - подключение к серверу password = protok2002
+\q - отключиться от сервера 
+pip install psycopg2 - скачивание библиотеки для миграция postgres
+python manage.py makemigrations - создание миграция для PostgreSQL
+python manage.py migrate - применение к базе данных изменений через миграции
+python manage.py shell - для локальный отладки 
