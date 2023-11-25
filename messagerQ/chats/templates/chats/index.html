@@ -5,46 +5,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>{{ title }}</title>
     <link type="text/css" href = "{% static "chats/css/styles.css" %}" rel = "stylesheet"/>
-    <link rel="stylesheet" href="styles.css">
+    <link rel = "shortcut icon" href ="{% static 'chats/images/call.svg'%}"/>
+
 </head>
+
 
 <body>
     <div class="chat">
         <section class="menu">
             <div class="menu__topcontainer">
-                <img src="./assets/home.svg" alt="home" />
+                <img src="{% static 'chats/images/home.svg'%}" alt="home" />
                 <label>
                     <input placeholder="Поиск..." />
-                    <img src="./assets/search.svg" alt="search" />
+                    <img src="{% static 'chats/images/search.svg'%}" alt="search" />
                 </label>
             </div>
             <div class="menu__friends">
                 <h1>Друзья</h1>
                 <ul>
-                    <li>Друг</li>
-                    <li>Друг</li>
-                    <li>Друг</li>
-                    <li>Друг</li>
-                    <li>Друг</li>
+                    {% for friend in friends%}
+                        {% if friend.pk == chat_selected %}
+                            <li class = 'selected'>{{friend.name}}</li>
+                        {% else %}
+                            <li><a href  = "{{ friend.get_absolute_url }}">{{friend.name}}</a></li>
+                        {% endif %}
+                    {% endfor %}
                 </ul>
             </div>
         </section>
         <section class="window">
             <div class="window__icons">
-                <img src="./assets/call.svg" alt="call" />
-                <img src="./assets/settings.svg" alt="settings" />
+                {%if request.user.is_authenticated%}
+                <li class = "last">{{user.username}}|<a href = {%url 'logout'%}>Выйти</a></li>
+                {% else %}
+                <li class = "last"><a href = {%url 'registration'%}>Регистрация</a> | <a href = {%url 'login'%}>Войти</a></li>
+                {% endif %}
+                <img src="{% static 'chats/images/call.svg'%}" alt="call" />
+                <img src="{% static 'chats/images/settings.svg'%}" alt="settings" />
             </div>
             <div>
 
             </div>
             <div class="window__send">
-                <img src="assets/file.svg" alt="file" />
+                <img src="{% static 'chats/images/file.svg'%}" alt="file" />
                 <input placeholder="Написать сообщение...">
                 <div>
-                    <img src="assets/smile.svg" alt="smile" />
-                    <img src="assets/send.svg" alt="send" />
+                    <img src="{% static 'chats/images/smile.svg'%}" alt="smile" />
+                    <img src="{% static 'chats/images/send.svg'%}" alt="send" />
                 </div>
             </div>
         </section>

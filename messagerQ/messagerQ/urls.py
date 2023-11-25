@@ -16,12 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from chats.views import index
-
+#from chats.views import index
+#from ..messagerQ import settings
+from .settings import DEBUG
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('chats/', include('chats.urls')),
+    #path('/', include())
     #path('chats/<int>:chatid/',include('chats.urls')),
-    path('newsfeed', include('chats.urls'))
+    #path('newsfeed', include('chats.urls'))
 ]
+
+# debug_tool/urls.py
+
+if DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

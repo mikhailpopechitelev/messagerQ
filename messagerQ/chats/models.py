@@ -1,12 +1,24 @@
 from django.db import models
+from django.urls import reverse
 
 # Create your models here.
 class User(models.Model):
     name = models.CharField(max_length=45)
     email = models.EmailField(max_length=45)
-    password = models.CharField(max_length=45)
     dateregistration = models.DateField(auto_now_add=True)
     datelastlogin = models.DateField(auto_now=True)
+    
+    def __str__(self) -> str:
+        return self.name
+    
+    def get_absolute_url(self):
+        return reverse("chat", kwargs={"chat_id": self.pk})
+    
+    class Meta:
+        verbose_name = 'Пользователи'
+        verbose_name_plural = "Пользователи"
+        ordering = ['name']
+        
 
 
 class Notifications(models.Model):
@@ -26,6 +38,14 @@ class Autorizations(models.Model):
     socialnetworks = models.CharField(max_length=45)
     token = models.CharField(max_length=45)
     user = models.ForeignKey('User', on_delete=models.CASCADE, null=True)
+    password = models.CharField(max_length=45)
+    username = models.CharField( max_length=45)
+    
+    context_object_name = 'reg'
+    
+    def get_absolute_url(self):
+        return reverse("registration", kwargs={"pk": self.pk})
+    
     
     
 class Chats(models.Model):
@@ -33,7 +53,7 @@ class Chats(models.Model):
     name = models.CharField(max_length=20)
     creator = models.ForeignKey('User', on_delete=models.CASCADE, null=True)
     
-     
+
 class Friendships(models.Model):
     status = models.CharField(max_length=20)
     firstusr = models.ForeignKey(User, related_name='firstusr_friendships_set', on_delete=models.CASCADE)
