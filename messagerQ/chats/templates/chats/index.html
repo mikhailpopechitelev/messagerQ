@@ -13,6 +13,27 @@
 
 
 <body>
+    <button id="startWebSocket">Start WebSocket</button>
+
+    <script>
+        document.getElementById('startWebSocket').addEventListener('click', function () {
+            const socket = new WebSocket('ws://127.0.0.1:8000/ws');
+
+            socket.onopen = function (e) {
+                socket.send(JSON.stringify({
+                    message: 'Hello from Js client'
+                }));
+            };
+
+            socket.onmessage = function (event) {
+                try {
+                    console.log(event);
+                } catch (e) {
+                    console.log('Error:', e.message);
+                }
+            };
+        });
+    </script>
     <div class="chat">
         <section class="menu">
             <div class="menu__topcontainer">

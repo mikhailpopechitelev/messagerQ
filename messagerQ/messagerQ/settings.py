@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -73,7 +74,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'messagerQ.wsgi.application'
+#WSGI_APPLICATION = 'messagerQ.wsgi.application'
+ASGI_APPLICATION = 'messagerQ.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database
@@ -154,8 +165,9 @@ CACHES = {
     }
 }
 
-# django-channels
 '''
+# django-channels
+
 ASGI_APPLICATION = 'messagerQ.routing.application'
 
 CHANNEL_LAYERS ={
@@ -166,5 +178,5 @@ CHANNEL_LAYERS ={
         }
     }
 }
-'''
 # End django-channels
+'''

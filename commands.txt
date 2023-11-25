@@ -18,3 +18,11 @@ python manage.py createsuperuser - создание пользователя д�
 pip install django-debug-toolbar
 docker run -p 6379:6379 -d redis:2.8 запуск redis на порту 6379 для дальнейшего подключения wedsockets 
 cpm.cmake
+pip install daphne
+docker ps -aq
+docker ps
+docker ps -a
+docker stop 
+docker run -p 6379:6379 -d redis:2.8
+docker exec -it 4f1de08e3cc9  redis-server --version
+docker pull redis:latest

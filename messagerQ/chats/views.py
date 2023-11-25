@@ -25,7 +25,7 @@ class ChatsHome(DataMixin, ListView):
     def get_queryset(self):
         friends = cache.get('friends')
         if not friends:
-            result = Friendships.objects.filter(firstusr__pk=self.request.user.id).values_list('secondusr', flat=True)
+            result = Friendships.objects.filter(firstusr__pk= self.request.user.id).values_list('secondusr', flat=True)
             third_elements = [item for item in result]
             friends = User.objects.filter(pk__in = third_elements)
             cache.set('friends',friends, 60*2)
