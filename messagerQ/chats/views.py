@@ -3,33 +3,43 @@ from django.contrib.auth import logout
 from django.db.models.query import QuerySet
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .models import * 
 from .forms import *
 from .utils import *
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView,DetailView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.core.cache import cache
-
+from django.contrib.auth.models import User
 
 
 class ChatsHome(DataMixin, ListView):
     model = User
     template_name = 'chats/index.html'
-    context_object_name = 'friends'
+    context_object_name = 'chats'
     extra_context = {'title':'Главная страница чатов'}
 
+    
+
     def get_queryset(self):
-        friends = cache.get('friends')
-        if not friends:
-            result = Friendships.objects.filter(firstusr__pk= self.request.user.id).values_list('secondusr', flat=True)
-            third_elements = [item for item in result]
-            friends = User.objects.filter(pk__in = third_elements)
-            cache.set('friends',friends, 60*2)
-        return friends
+        user_chats = Chatparticipant.objects.filter(participant=self.request.user.id).values_list('chat', flat=True)
+        chats = Chats.objects.filter(id__in=user_chats)
+        #print(chats)
+        #result = Friendships.objects.filter(firstusr__pk= self.request.user.id).values_list('secondusr', flat=True)
+        #third_elements = [item for item in result]
+        #friends = User.objects.filter(pk__in = third_elements)
+        #friends = cache.get('friends')
+        #if not friends:
+        #    result = Friendships.objects.filter(firstusr__pk= 1).values_list('secondusr', flat=True)
+        #    print(result)
+        #    third_elements = [item for item in result]
+        #    print(third_elements)
+        #    friends = User.objects.filter(pk__in = third_elements)
+        #    cache.set('friends',friends, 60*2)
+        return chats
     
     #когда подгружать инфу нужно динамически
     def get_context_data(self, **kwargs: Any):
@@ -46,10 +56,26 @@ class ChatsHome(DataMixin, ListView):
     #    context = dict(list(context.items())+ list(c_def.items('title''Главная страница чатов')))
     #    return context
     
+
+class UserChat(DataMixin, ListView):
+    model = Chats
+    template_name = 'chats/chat.html'
+    context_object_name = 'messages'
+    paginate_by = 10
     
-#def index(request):
-#    friends = User.objects.all()
-#    return render(request, 'chats/index.html',{'friends': friends,'title':'Главная страница чатов'})
+    def get_queryset(self):
+        chat_id = self.kwargs['chat_id']
+        messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:3]
+        print(messages.values())
+        return messages
+    
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        #context['chat_id'] = 
+        context = super().get_context_data(**kwargs)
+        context['chat_id'] = self.kwargs['chat_id']
+        if 'cat_selected' not in context:
+            context['cat_selected'] = 0
+        return context
 
 def newsfeed(request):
     return render(request, 'chats/newsfeed.html')
@@ -82,19 +108,6 @@ class RegisterUser(CreateView):
 #        form = AuthorizationForm()
 #    return render(request, 'chats/authorization.html')
 
-class UserChat(ListView):
-    model = Messages
-    template_name = 'chats/index.html'
-    context_object_name = 'messages'
-    
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        if 'cat_selected' not in context:
-            context['cat_selected'] = 0
-        return context
-    #все сообщения принадлежащие такущему id чату
-    #def get_queryset(self):
-    #    return Messages.objects.filter(cat__slug=self.kwargs['cat_slug', is_published = True])
 
 def pageNotFound(request, exception):
     return HttpResponse('<h1>Cтраница не найдена</h1>')

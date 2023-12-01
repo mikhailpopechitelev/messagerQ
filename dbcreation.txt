@@ -2,6 +2,14 @@ for i in range(5):
     per = User(name = "Михаил"+str(i),email = "popechitelevm@mail.ru")
     per.save()
 
+from django.contrib.auth.models import User
+user = User.objects.create_user(username='your_username', password='your_password', email='your_email@example.com')
+
+for i in range(5):
+    user = User.objects.create_user(username=f'Михаил {i}',password = '2002protok2002',email= '')
+    user.save()
+from django.contrib.auth.models import User
+
 for i in range(3):
     chat = Chats(name = 'chat'+str(i), creator = User.objects.get(id = i+1))
     chat.save()

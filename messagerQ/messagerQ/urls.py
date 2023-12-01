@@ -23,7 +23,6 @@ from .settings import DEBUG
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('chats/', include('chats.urls')),
-    #path('/', include())
     #path('chats/<int>:chatid/',include('chats.urls')),
     #path('newsfeed', include('chats.urls'))
 ]

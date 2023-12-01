@@ -10,6 +10,7 @@
     <link rel = "shortcut icon" href ="{% static 'chats/images/call.svg'%}"/>
 
 </head>
+
 <body>
     <div class="chat">
         <section class="menu">
@@ -29,7 +30,7 @@
                                 socket.onopen = function (e) {
                                     socket.send(JSON.stringify({
                                         type: 'searchButton',
-                                        message: messageText 
+                                        message: messageText
                                     }));
                                 };
         
@@ -53,11 +54,11 @@
             <div class="menu__friends">
                 <h1>Друзья</h1>
                 <ul>
-                    {% for chat in chats%}
+                    {% for friend in friends%}
                         {% if friend.pk == chat_selected %}
-                            <li class = 'selected'>{{chat.name}}</li>
+                            <li class = 'selected'>{{friend.username}}</li>
                         {% else %}
-                            <li><a href  = "{%url 'chat' chat.pk%}">{{chat.name}}</a></li>
+                            <li><a href  = "{%url 'chat' friend.pk%}">{{friend.username}}</a></li>
                         {% endif %}
                     {% endfor %}
                 </ul>
@@ -74,7 +75,9 @@
                 <img src="{% static 'chats/images/settings.svg'%}" alt="settings" />
             </div>
             <div id="messageContainer" class="window__messages">
-                <!-- Здесь будут добавляться сообщения -->
+                {% for message in messages %}
+                    <div>{{ message.created_at|date:"H:i" }}:  {{message.sender.username}}:{{ message.text }}</div>
+                {% endfor %}
             </div>
             <div class="window__send">
                 <input id="messageInput" placeholder="Написать сообщение...">
@@ -82,40 +85,54 @@
                     <img id="smileButton" src="{% static 'chats/images/smile.svg' %}" alt="smile" />
                     <img id="sendButton" src="{% static 'chats/images/send.svg' %}" alt="send" style = '{cursor: pointer;}'/>
                 </div>
+                <!-- Дополненный код для отображения сообщений в окне чата -->
+            <!-- Оставьте ваш HTML код как есть -->
+
                 <script>
                     function sendMessage(type) {
                         const messageText = document.getElementById('messageInput').value;
-        
+
                         // Проверка на пустой ввод
                         if (messageText.trim() !== '') {
                             const socket = new WebSocket('ws://127.0.0.1:8000/ws');
-        
+
                             socket.onopen = function (e) {
                                 socket.send(JSON.stringify({
                                     type: type,
                                     message: messageText,
-                                    user_id: {{user_id}},
+                                    user_id: {{request.user.id}},
+                                    chat_id: {{chat_id}}
                                 }));
                             };
-        
+
                             socket.onmessage = function (event) {
                                 try {
                                     console.log(event);
+                                    console.log(event.data)
                                     const messageContainer = document.getElementById('messageContainer');
+                                    
+                                    // Создаем новый элемент сообщения
                                     const newMessage = document.createElement('div');
                                     newMessage.textContent = event.data; // Предполагаем, что данные содержат текст сообщения
+                                    
+                                    // Добавляем сообщение в конец контейнера
                                     messageContainer.appendChild(newMessage);
+
+                                    // Прокручиваем контейнер вниз
+                                    messageContainer.scrollTop = messageContainer.scrollHeight;
                                 } catch (e) {
                                     console.log('Error:', e.message);
                                 }
                             };
                         }
                     }
-        
+
                     document.getElementById('sendButton').addEventListener('click', function () {
                         sendMessage('sendButton');
                     });
                 </script>
+
+
             </div>
         </section>
     </div>

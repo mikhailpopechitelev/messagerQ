@@ -83,3 +83,18 @@ label {
     display: flex;
     justify-content: space-between;
 }
+#sendButton{cursor: pointer;
+            border: 1px solid red;}
+
+
+#messageContainer {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Выравнивание элементов по нижнему краю */
+    overflow: auto;
+}
+            
+#messageInput {
+    margin-top: 10px;  /* Добавление отступа от полей сообщений */
+}

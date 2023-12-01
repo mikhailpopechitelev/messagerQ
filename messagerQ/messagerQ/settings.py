@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
+    #'django.contrib.sites',
     'debug_toolbar',
     'chats.apps.ChatsConfig',
     'channels',
@@ -163,6 +163,10 @@ CACHES = {
         'BACKEND':'django.core.cache.backends.filebased.FileBasedCache',
         'LOCATION': os.path.join(BASE_DIR,'messager_cache'),
     }
+}
+
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': lambda u: "/chats/%s/" % u.username,
 }
 
 '''
