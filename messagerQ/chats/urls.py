@@ -9,8 +9,9 @@ urlpatterns = [
     path('logout', logout_user, name="logout"),
     path('registration', RegisterUser.as_view(), name = 'registration'), 
     path('login', LoginUser.as_view(), name="login"),
-
+    path('messages/<int:chat_id>/', get_latest_messages, name='get_latest_messages'),
 ]
+
 
 
 handler404 = pageNotFound

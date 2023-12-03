@@ -14,15 +14,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.core.cache import cache
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 
+def get_latest_messages(request, chat_id):
+    messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:20]
+    message_data = [{'time': msg.created_at.strftime('%H:%M'), 'text': msg.text, 'sender': msg.sender.username} for msg in messages]
+    return JsonResponse({'messages': message_data})
 
 class ChatsHome(DataMixin, ListView):
     model = User
     template_name = 'chats/index.html'
     context_object_name = 'chats'
     extra_context = {'title':'Главная страница чатов'}
-
-    
 
     def get_queryset(self):
         user_chats = Chatparticipant.objects.filter(participant=self.request.user.id).values_list('chat', flat=True)
@@ -49,28 +52,20 @@ class ChatsHome(DataMixin, ListView):
             context['user_id'] = self.request.user.id
         return context
     
-    #когда подгружать инфу нужно динамически
-    #def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-    #    context = super().get_context_data(**kwargs) 
-    #    c_def = self.get_user_context()
-    #    context = dict(list(context.items())+ list(c_def.items('title''Главная страница чатов')))
-    #    return context
     
-
 class UserChat(DataMixin, ListView):
     model = Chats
     template_name = 'chats/chat.html'
     context_object_name = 'messages'
     paginate_by = 10
     
+    
     def get_queryset(self):
         chat_id = self.kwargs['chat_id']
-        messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:3]
-        print(messages.values())
+        messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:20]
         return messages
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        #context['chat_id'] = 
         context = super().get_context_data(**kwargs)
         context['chat_id'] = self.kwargs['chat_id']
         if 'cat_selected' not in context:
