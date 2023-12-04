@@ -27,6 +27,7 @@ urlpatterns = [
     #path('newsfeed', include('chats.urls'))
 ]
 
+
 # debug_tool/urls.py
 
 if DEBUG:

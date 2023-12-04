@@ -19,49 +19,10 @@
                 <label>
                     <input id="searchInput" placeholder="Поиск..." />
                     <img id="searchButton" src="{% static 'chats/images/search.svg' %}" alt="search" />
-                    <script>
-                        function sendMessageI() {
-                            const messageText = document.getElementById('searchInput').value;
-        
-                            // Проверка на пустой ввод
-                            if (messageText.trim() !== '') {
-                                const socket = new WebSocket('ws://127.0.0.1:8000/ws');
-        
-                                socket.onopen = function (e) {
-                                    socket.send(JSON.stringify({
-                                        type: 'searchButton',
-                                        message: messageText
-                                    }));
-                                };
-        
-                                socket.onmessage = function (event) {
-                                    try {
-                                        console.log(event);
-                                    } catch (e) {
-                                        console.log('Error:', e.message);
-                                    }
-                                };
-                            }
-                        }
-        
-                        document.getElementById('searchButton').addEventListener('click', function () {
-                            sendMessageI();
-                        });
-
-                    </script>
                 </label>
             </div>
             <div class="menu__friends">
                 <h1>Друзья</h1>
-                <ul>
-                    {% for friend in friends%}
-                        {% if friend.pk == chat_selected %}
-                            <li class = 'selected'>{{friend.username}}</li>
-                        {% else %}
-                            <li><a href  = "{%url 'chat' friend.pk%}">{{friend.username}}</a></li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
             </div>
         </section>
         <section class="window">
@@ -75,9 +36,7 @@
                 <img src="{% static 'chats/images/settings.svg'%}" alt="settings" />
             </div>
             <div id="messageContainer" class="window__messages">
-                {% for message in messages %}
-                    <div>{{ message.created_at|date:"H:i" }}:  {{message.sender.username}}:{{ message.text }}</div>
-                {% endfor %}
+
             </div>
             <div class="window__send">
                 <input id="messageInput" placeholder="Написать сообщение...">
@@ -88,87 +47,119 @@
                 <!-- Дополненный код для отображения сообщений в окне чата -->
             <!-- Оставьте ваш HTML код как есть -->
 
-            <script>
-                function sendMessage(type) {
-                    const messageText = document.getElementById('messageInput').value;
-            
-                    if (messageText.trim() !== '') {
-                        const socket = new WebSocket('ws://127.0.0.1:8000/ws');
-            
-                        socket.onopen = function (e) {
-                            socket.send(JSON.stringify({
-                                type: type,
-                                message: messageText,
-                                user_id: {{request.user.id}},
-                                chat_id: {{chat_id}}
-                            }));
-                        };
-            
+                <script>
+                    
+                    document.addEventListener('DOMContentLoaded', function () {
+
+                        const messageContainer = document.getElementById('messageContainer');
+                        const socket = new WebSocket('ws://127.0.0.1:8000/ws/chats/{{chat_id}}');
+
+                        // Функция для загрузки последних 20 сообщений с сервера
+                        async function loadInitialMessages() {
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8000/chats/messages/{{chat_id}}`);
+                                const data = await response.json();
+                
+                                // Очищаем messageContainer
+                                messageContainer.innerHTML = '';
+                
+                                // Добавляем новые сообщения в messageContainer
+                                data.messages.slice(0, 20).forEach(msg => {
+                                    const newMessage = document.createElement('div');
+                                    newMessage.innerHTML = `<p>${msg.time}: ${msg.sender}: ${msg.text}</p>`;
+                                    messageContainer.appendChild(newMessage);
+                                });
+                
+                                // Прокручиваем контейнер вниз
+                                messageContainer.scrollTop = messageContainer.scrollHeight;
+                            } catch (error) {
+                                console.error('Error fetching latest messages:', error);
+                            }
+                        }
+                
+                        // Вызываем функцию для загрузки сообщений при открытии страницы
+                        loadInitialMessages();
+                        function sendMessage(type) {
+                            const messageText = document.getElementById('messageInput').value;
+                            if (messageText.trim() !== '') {
+                                socket.send(JSON.stringify({
+                                    type: type,
+                                    message: messageText,
+                                    user_id: {{request.user.id}},
+                                    chat_id: {{chat_id}}
+                                }));
+                                document.getElementById('messageInput').value = '';
+                            }
+                        }
+
+                        document.getElementById('messageInput').addEventListener('keydown', function (event) {
+                            if (event.key === 'Enter') {
+                                // Предотвращаем стандартное поведение Enter (новая строка)
+                                event.preventDefault();
+                                sendMessage('sendButton');
+                            }
+                        });
+
                         socket.onmessage = function (event) {
                             try {
-                                console.log('333')
-                                console.log(event)
-                                console.log(event.data)
-                                console.log(event.type)
-                                //const data = JSON.parse(event.data);
+                                const data = JSON.parse(event.data);
                                 const messageContainer = document.getElementById('messageContainer');
-                                updateMessageContainer();
-                                /*
-                                if (event.type === 'websocket.send') {
-
-                                    console.log('1111')
+            
+                                if (data.update_messages) {
+                                    // Если получено уведомление об обновлении сообщений, вызываем функцию для обновления сообщений
                                     updateMessageContainer();
                                 } else {
-                                    console.log('222')
-
+                                    // Ваш существующий код для обработки сообщений
                                     const newMessage = document.createElement('div');
-                                    newMessage.textContent = data.text;
-            
-           
+                                    newMessage.innerHTML = `<p>${data.time}: ${data.sender}: ${data.text}</p>`;
                                     messageContainer.appendChild(newMessage);
             
-       
+                                    // Прокручиваем контейнер вниз
                                     messageContainer.scrollTop = messageContainer.scrollHeight;
-                                */
-                                
+                                }
                             } catch (e) {
-                                console.log('444')
                                 console.log('Error:', e.message);
                             }
                         };
-                    }
-                }
-            
-                function updateMessageContainer() {
-                    const chatId = {{ chat_id }};
-                    const messageContainer = document.getElementById('messageContainer');
-                
-                    // Отправляем запрос на сервер для получения последних сообщений
-                    fetch(`http://127.0.0.1:8000/chats/messages/${chatId}/`)
-                        .then(response => response.json())
-                        .then(data => {
-                            // Очищаем messageContainer
-                            messageContainer.innerHTML = '';
-                
-                            // Добавляем новые сообщения в messageContainer
-                            data.messages.forEach(msg => {
-                                const newMessage = document.createElement('div');
-                                newMessage.textContent = `${msg.time}: ${msg.sender}: ${msg.text}`;
-                                messageContainer.appendChild(newMessage);
-                            });
-                
-                            // Прокручиваем контейнер вниз
-                            messageContainer.scrollTop = messageContainer.scrollHeight;
-                        })
-                        .catch(error => console.error('Error fetching latest messages:', error));
-                }
-                
-            
-                document.getElementById('sendButton').addEventListener('click', function () {
-                    sendMessage('sendButton');
-                });
-            </script>
+                        socket.onerror = function (event) {
+                            console.error('WebSocket error:', event);
+                        };
+                        
+                        socket.onclose = function (event) {
+                            console.log('WebSocket closed:', event);
+                        };
 
+                        function updateMessageContainer() {
+                            const chatId = {{ chat_id }};
+                            const messageContainer = document.getElementById('messageContainer');
+                    
+                            // Отправляем запрос на сервер для получения последних сообщений
+                            fetch(`http://127.0.0.1:8000/chats/messages/{{chat_id}}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    // Очищаем messageContainer
+                                    messageContainer.innerHTML = '';
+                    
+                                    // Добавляем новые сообщения в messageContainer
+                                    data.messages.forEach(msg => {
+                                        const newMessage = document.createElement('div');
+                                        newMessage.innerHTML = `<p>${msg.time}: ${msg.sender}: ${msg.text}</p>`;
+                                        messageContainer.appendChild(newMessage);
+                                    });
+                    
+                                    // Прокручиваем контейнер вниз
+                                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                                })
+                                .catch(error => console.error('Error fetching latest messages:', error));
+                        }
+                        
+                        document.getElementById('sendButton').addEventListener('click', function () {
+                            sendMessage('sendButton');
+                        });
+                        
+
+                    });
+                </script>
             </div>
         </section>
     </div>

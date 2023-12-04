@@ -8,16 +8,19 @@ from django.http import HttpResponse
 from .models import * 
 from .forms import *
 from .utils import *
+import json
+from channels.db import database_sync_to_async
 from django.views.generic import ListView, CreateView,DetailView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 
 def get_latest_messages(request, chat_id):
-    messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:20]
+    messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:20][::-1]
     message_data = [{'time': msg.created_at.strftime('%H:%M'), 'text': msg.text, 'sender': msg.sender.username} for msg in messages]
     return JsonResponse({'messages': message_data})
 
@@ -53,31 +56,102 @@ class ChatsHome(DataMixin, ListView):
         return context
     
     
-class UserChat(DataMixin, ListView):
+class UserChat(DataMixin, ListView, AsyncWebsocketConsumer):
     model = Chats
     template_name = 'chats/chat.html'
     context_object_name = 'messages'
-    paginate_by = 10
     
-    
-    def get_queryset(self):
-        chat_id = self.kwargs['chat_id']
-        messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:20]
-        return messages
+    # def get_queryset(self):
+    #     chat_id = self.kwargs['chat_id']
+    #     messages = Messages.objects.filter(chat=chat_id).order_by('-created_at')[:20]
+    #     return messages
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['chat_id'] = self.kwargs['chat_id']
-        if 'cat_selected' not in context:
-            context['cat_selected'] = 0
         return context
+
+class UserChatWebsocket(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_name = self.scope['url_route']['kwargs']['chat_id']
+        self.room_group_name = f"chat_{self.room_name}"
+        
+        # Присоединяемся к группе
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.close()
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        sender_id = data['user_id']
+        chat_id = data['chat_id']
+
+        sender = await database_sync_to_async(User.objects.get)(id=sender_id)
+        chat = await database_sync_to_async(Chats.objects.get)(id=chat_id)
+
+        message = Messages(
+            text=data['message'],
+            sender=sender,
+            chat=chat,
+        )
+
+        await database_sync_to_async(message.save)()
+
+        time_only = message.created_at.strftime('%H:%M')
+        message_text = data['message']
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat.message',
+                'time': time_only,
+                'sender': sender.username,
+                'text': message_text,
+            }
+        )
+        
+    # Обработчик сообщений из группы
+    async def chat_message(self, event):
+        # Отправляем сообщение клиенту
+        await self.send(text_data=json.dumps({
+            'type': 'websocket.send',
+            'time': event['time'],
+            'sender': event['sender'],
+            'text': event['text'],
+        }))
+
+    #     # # Отправляем уведомление всем клиентам в данном чате
+    #     # await self.send_group_message(chat_id)
+
+    # async def send_group_message(self, chat_id):
+    #     # Добавляем текущего пользователя в группу с именем чата
+    #     await self.channel_layer.group_add(
+    #         str(chat_id),
+    #         self.channel_name
+    #     )
+
+    #     # Отправляем уведомление о необходимости обновить сообщения всем подключенным клиентам в данной группе
+    #     await self.send(text_data=json.dumps({'update_messages': True}))
+
+    # async def update_messages(self, event):
+    #     # Получаем уведомление о необходимости обновить сообщения
+    #     await self.send(text_data=json.dumps({'update_messages': True}))
 
 def newsfeed(request):
     return render(request, 'chats/newsfeed.html')
 
 
 class LoginUser(LoginView):
-    #form_class = UserCreationForm
+
     form_class = AuthenticationForm
     template_name = 'chats/login.html'
     
@@ -90,20 +164,7 @@ class RegisterUser(CreateView):
     template_name = 'chats/registration.html'
     success_url = reverse_lazy('login')
     
-#def authorization(request):
-#    if request.method == 'POST':
-#        form = AuthorizationForm(request.POST)
-#        if form.is_valid():
-#           try:
-#                form.save()
-#                return redirect('chats')
-#            except:
-#                form.add_error(None, 'Ошибка авторизации пользователя')
-#    else:
-#        form = AuthorizationForm()
-#    return render(request, 'chats/authorization.html')
-
-
+    
 def pageNotFound(request, exception):
     return HttpResponse('<h1>Cтраница не найдена</h1>')
 

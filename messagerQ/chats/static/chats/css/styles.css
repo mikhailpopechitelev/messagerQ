@@ -92,7 +92,7 @@ label {
     display: flex;
     flex-direction: column;
     justify-content: flex-end; /* Выравнивание элементов по нижнему краю */
-    overflow: auto;
+    overflow-y: auto;
 }
             
 #messageInput {
