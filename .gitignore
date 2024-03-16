@@ -1,1 +1,4 @@
 /venv/
+/commands/
+/dbcreation/
+/messagerQ/chats/migrations/

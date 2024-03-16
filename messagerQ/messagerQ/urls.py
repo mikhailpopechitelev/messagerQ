@@ -25,6 +25,7 @@ urlpatterns = [
     path('chats/', include('chats.urls')),
     #path('chats/<int>:chatid/',include('chats.urls')),
     #path('newsfeed', include('chats.urls'))
+    path('', include('social_django.urls')), 
 ]
 
 

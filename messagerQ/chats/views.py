@@ -56,7 +56,7 @@ class ChatsHome(DataMixin, ListView):
         return context
     
     
-class UserChat(DataMixin, ListView, AsyncWebsocketConsumer):
+class UserChat(DataMixin, ListView):
     model = Chats
     template_name = 'chats/chat.html'
     context_object_name = 'messages'

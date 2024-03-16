@@ -14,8 +14,8 @@ pip install psycopg2 - скачивание библиотеки для мигр
 python manage.py makemigrations - создание миграция для PostgreSQL
 python manage.py migrate - применение к базе данных изменений через миграции
 python manage.py shell - для локальный отладки 
-python manage.py createsuperuser - создание пользователя для админки
-pip install django-debug-toolbar
+python manage.py createsuperuser - создание пользователя для админки 
+pip install django-debug-toolbar 
 docker run -p 6379:6379 -d redis:2.8 запуск redis на порту 6379 для дальнейшего подключения wedsockets 
 cpm.cmake
 pip install daphne
@@ -26,3 +26,6 @@ docker stop
 docker run -p 6379:6379 -d redis:2.8
 docker exec -it 4f1de08e3cc9  redis-server --version
 docker pull redis:latest
+docker info > nul 2>&1 && echo Docker is running || echo Docker is not running - проверка запущен
+ли в данный момент docker 
+dockerd - запуск docker engin для дальнейшего подключения к вед сокетам 
